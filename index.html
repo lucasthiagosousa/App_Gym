@@ -3,37 +3,65 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN AI | Elite Fitness</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TITAN AI | Elite Performance</title>
+    
+    <!-- PWA & Mobile Meta -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TITAN AI">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/avataaars/svg?seed=TitanAI">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #A855F7;
-            --secondary: #3B82F6;
-            --bg-deep: #050505;
-            --surface: #121212;
+            --accent: #06B6D4;
+            --bg-deep: #000000;
+            --surface: #0a0a0a;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
         }
         
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background-color: var(--bg-deep);
-            color: #f8fafc;
+            color: #ffffff;
             -webkit-tap-highlight-color: transparent; 
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
         }
+
+        #root {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+        }
+
+        .font-bebas { font-family: 'Bebas Neue', cursive; }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(15, 15, 15, 0.7);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .neo-card {
-            background: linear-gradient(145deg, #18181b, #09090b);
-            border: 1px solid #27272a;
+            background: linear-gradient(165deg, #0f0f0f, #050505);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
         }
 
         @keyframes mesh-gradient {
@@ -45,83 +73,32 @@
         .animate-mesh {
             background: linear-gradient(-45deg, #A855F7, #3B82F6, #06B6D4, #8B5CF6);
             background-size: 400% 400%;
-            animation: mesh-gradient 15s ease infinite;
+            animation: mesh-gradient 10s ease infinite;
         }
-
-        @keyframes nav-bounce {
-            0% { transform: scale(1); }
-            30% { transform: scale(0.85); }
-            50% { transform: scale(1.1); }
-            70% { transform: scale(0.95); }
-            100% { transform: scale(1); }
-        }
-
-        .animate-nav-active {
-            animation: nav-bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .floating { animation: float 3s ease-in-out infinite; }
 
         .btn-primary {
-            background: linear-gradient(to right, #A855F7, #3B82F6);
+            background: linear-gradient(135deg, #A855F7 0%, #3B82F6 100%);
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        
         .btn-primary:active { transform: scale(0.95); opacity: 0.9; }
 
+        .nav-item-active {
+            color: #ffffff;
+            filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.8));
+        }
+
         @keyframes slide-up {
-            from { transform: translateY(20px); opacity: 0; }
+            from { transform: translateY(30px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-        .animate-slide-up { animation: slide-up 0.5s ease-out forwards; }
+        .animate-slide-up { animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-        @keyframes exercise-glow {
-            0%, 100% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); }
-            50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.6); }
-        }
-        .animate-exercise-active {
-            animation: exercise-glow 2s ease-in-out infinite;
-        }
-
-        @keyframes success-glow {
-            0% { box-shadow: 0 0 0px rgba(16, 185, 129, 0); transform: scale(1); }
-            50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.5); transform: scale(1.04); border-color: rgba(16, 185, 129, 1); }
-            100% { box-shadow: 0 0 0px rgba(16, 185, 129, 0); transform: scale(1); }
-        }
-        .animate-success-glow {
-            animation: success-glow 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-            z-index: 50;
-        }
-
-        @keyframes check-pop {
-            0% { transform: scale(0) rotate(-45deg); opacity: 0; }
-            70% { transform: scale(1.5) rotate(0deg); opacity: 1; }
-            100% { transform: scale(1) rotate(0deg); opacity: 0; }
-        }
-        .animate-check-pop {
-            animation: check-pop 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        .nav-item-active {
-            position: relative;
-            color: white;
-        }
-        
-        .nav-item-active::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 4px;
-            height: 4px;
-            background-color: var(--primary);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--primary);
+        /* Estilo para cards de exercícios no modo treino */
+        .exercise-card-active {
+            border-left: 4px solid var(--primary);
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.05) 0%, transparent 100%);
         }
     </style>
 <script type="importmap">

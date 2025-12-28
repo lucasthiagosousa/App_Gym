@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Bot, Loader2, Trash2, Dumbbell, Clock, ChevronRight, X, Play, AlertCircle, Cpu, Utensils, Apple } from 'lucide-react';
+import { Send, Sparkles, Bot, Loader2, Trash2, Dumbbell, Clock, ChevronRight, X, Play, AlertCircle, Cpu, Utensils, Apple, Flame, BrainCircuit, Zap, CheckCircle2 } from 'lucide-react';
 import { getAIPersonalAdvice } from '../services/geminiService';
 import { EXERCISES } from '../data/exercises';
 import { ActiveProtocol } from '../types';
@@ -15,7 +15,6 @@ const PersonalAI: React.FC<PersonalAIProps> = ({ onActivateProtocol }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPlanBuilder, setShowPlanBuilder] = useState(false);
   
-  // Questionnaire States
   const [objective, setObjective] = useState<'Hipertrofia' | 'Emagrecimento' | 'Força'>('Hipertrofia');
   const [duration, setDuration] = useState('60');
   const [level, setLevel] = useState<'Iniciante' | 'Intermediário' | 'Avançado'>('Iniciante');
@@ -57,7 +56,7 @@ const PersonalAI: React.FC<PersonalAIProps> = ({ onActivateProtocol }) => {
     MEU PERFIL: ${gender}, Objetivo principal: ${objective}, Nível atual: ${level}, Disponibilidade: ${duration} minutos por treino.
     Foco adicional/Restrições: ${injuries || 'Nenhuma'}.
     Lembre-se de usar os exercícios: ${exercisesList}.
-    POR FAVOR, inclua também um RESUMO NUTRICIONAL ao final do plano com dicas de alimentação estratégica para meu objetivo de ${objective}.`;
+    POR FAVOR, inclua obrigatoriamente as seções "### RESUMO NUTRICIONAL" e "### MENTALIDADE TITAN" com orientações específicas para o objetivo de ${objective}.`;
     
     handleSend(prompt);
     setShowPlanBuilder(false);
@@ -69,15 +68,17 @@ const PersonalAI: React.FC<PersonalAIProps> = ({ onActivateProtocol }) => {
     return upperText.includes('30 DIAS') || upperText.includes('### DIA 1') || upperText.includes('DIA 1:');
   };
 
-  const extractNutritionTips = (text: string) => {
-    const searchStrings = ["### RESUMO NUTRICIONAL", "### DICAS NUTRICIONAIS", "Resumo Nutricional:", "Dicas de Alimentação:"];
-    for (const search of searchStrings) {
-      const index = text.toUpperCase().indexOf(search);
-      if (index !== -1) {
-        return text.substring(index + search.length).trim();
-      }
-    }
-    return null;
+  const extractSection = (text: string, sectionTitle: string) => {
+    const upperText = text.toUpperCase();
+    const index = upperText.indexOf(sectionTitle.toUpperCase());
+    if (index === -1) return null;
+
+    const nextSectionIndex = upperText.indexOf("###", index + sectionTitle.length);
+    const content = nextSectionIndex === -1 
+      ? text.substring(index + sectionTitle.length) 
+      : text.substring(index + sectionTitle.length, nextSectionIndex);
+    
+    return content.trim();
   };
 
   const activateCurrentPlan = (text: string) => {
@@ -117,7 +118,7 @@ const PersonalAI: React.FC<PersonalAIProps> = ({ onActivateProtocol }) => {
       </div>
 
       {/* Messages Area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar space-y-6 px-1">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar space-y-8 px-1">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-6 opacity-30">
              <Bot size={60} className="text-zinc-800" />
@@ -128,44 +129,78 @@ const PersonalAI: React.FC<PersonalAIProps> = ({ onActivateProtocol }) => {
           </div>
         )}
         {messages.map((m, i) => {
-          const nutritionTips = m.role === 'model' ? extractNutritionTips(m.parts[0].text) : null;
-          const cleanText = m.role === 'model' && nutritionTips 
-            ? m.parts[0].text.substring(0, m.parts[0].text.toUpperCase().indexOf("### RESUMO NUTRICIONAL")).trim() 
-            : m.parts[0].text;
+          const nutritionTips = m.role === 'model' ? extractSection(m.parts[0].text, "### RESUMO NUTRICIONAL") : null;
+          const motivationTips = m.role === 'model' ? extractSection(m.parts[0].text, "### MENTALIDADE TITAN") : null;
+          
+          let cleanText = m.parts[0].text;
+          const sections = ["### RESUMO NUTRICIONAL", "### MENTALIDADE TITAN"];
+          sections.forEach(s => {
+            const idx = cleanText.toUpperCase().indexOf(s);
+            if (idx !== -1) cleanText = cleanText.substring(0, idx).trim();
+          });
 
           return (
             <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} animate-slide-up`}>
-              <div className={`max-w-[85%] p-5 rounded-[2rem] text-sm leading-relaxed ${
+              <div className={`max-w-[85%] p-6 rounded-[2.5rem] text-sm leading-relaxed ${
                 m.role === 'user' 
-                  ? 'bg-purple-600 text-white rounded-tr-none shadow-xl shadow-purple-600/10' 
-                  : 'bg-zinc-900 border border-white/5 text-zinc-300 rounded-tl-none shadow-lg whitespace-pre-wrap'
+                  ? 'bg-purple-600 text-white rounded-tr-none shadow-xl shadow-purple-600/10 font-medium' 
+                  : 'bg-zinc-900 border border-white/10 text-zinc-300 rounded-tl-none shadow-lg whitespace-pre-wrap'
               }`}>
                 {cleanText}
               </div>
               
+              {/* Seção de Nutrição Personalizada - ESTILO PRO CARD */}
               {m.role === 'model' && nutritionTips && (
-                <div className="mt-4 w-[85%] bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] p-5 shadow-lg animate-in slide-in-from-left-5 duration-700">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                      <Apple size={16} />
+                <div className="mt-4 w-[90%] bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-6 opacity-5 rotate-12 group-hover:rotate-45 transition-transform duration-700">
+                    <Utensils size={100} />
+                  </div>
+                  <div className="flex items-center gap-4 mb-4 relative z-10">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/40">
+                      <Apple size={22} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-black text-emerald-400 uppercase tracking-widest italic">Dicas de Nutrição Elite</h4>
-                      <p className="text-[8px] text-zinc-500 uppercase font-bold tracking-widest">Baseado no seu objetivo</p>
+                      <h4 className="text-xs font-black text-emerald-400 uppercase tracking-[0.2em] italic">Bio-Nutrição</h4>
+                      <p className="text-[9px] text-zinc-500 uppercase font-black tracking-widest block">Ajuste Metabólico: {objective}</p>
                     </div>
                   </div>
-                  <div className="text-[11px] text-zinc-300 font-medium leading-relaxed whitespace-pre-wrap italic">
+                  <div className="text-xs text-zinc-300 font-bold leading-relaxed whitespace-pre-wrap italic pl-2 border-l-2 border-emerald-500/30">
                     {nutritionTips}
                   </div>
+                  <div className="mt-4 flex gap-2">
+                    <span className="px-3 py-1 bg-emerald-500/10 rounded-full text-[8px] font-black text-emerald-500 uppercase">Proteína Alta</span>
+                    <span className="px-3 py-1 bg-emerald-500/10 rounded-full text-[8px] font-black text-emerald-500 uppercase">Hidratação 4L</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Seção de Motivação - ESTILO TITAN MINDSET */}
+              {m.role === 'model' && motivationTips && (
+                <div className="mt-4 w-[90%] bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-6 opacity-5 rotate-12 group-hover:scale-125 transition-all duration-700">
+                    <Zap size={100} />
+                  </div>
+                  <div className="flex items-center gap-4 mb-4 relative z-10">
+                    <div className="w-12 h-12 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/40">
+                      <BrainCircuit size={22} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-orange-400 uppercase tracking-[0.2em] italic">Titan Mindset</h4>
+                      <p className="text-[9px] text-zinc-500 uppercase font-black tracking-widest block">Drive Neural de Performance</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-300 font-black leading-relaxed whitespace-pre-wrap italic uppercase tracking-tight">
+                    "{motivationTips}"
+                  </p>
                 </div>
               )}
 
               {m.role === 'model' && isProtocolMessage(m.parts[0].text) && (
                 <button 
                   onClick={() => activateCurrentPlan(m.parts[0].text)}
-                  className="mt-4 btn-primary text-white font-black px-6 py-4 rounded-2xl text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-purple-500/20 transition-all hover:scale-105 active:scale-95"
+                  className="mt-8 btn-primary text-white font-black px-10 py-5 rounded-[2rem] text-[10px] uppercase tracking-[0.3em] flex items-center gap-3 shadow-2xl shadow-purple-500/40 transition-all hover:scale-105 active:scale-95"
                 >
-                  <Play size={12} fill="white" /> ATIVAR ESTE PROTOCOLO
+                  <CheckCircle2 size={16} /> ATIVAR PROTOCOLO
                 </button>
               )}
             </div>
@@ -173,33 +208,34 @@ const PersonalAI: React.FC<PersonalAIProps> = ({ onActivateProtocol }) => {
         })}
         {isLoading && (
             <div className="flex justify-start animate-slide-up">
-                <div className="bg-zinc-900 border border-white/5 p-5 rounded-[2rem] rounded-tl-none flex items-center gap-4">
+                <div className="bg-zinc-900 border border-white/5 p-6 rounded-[2.5rem] rounded-tl-none flex items-center gap-4">
                     <div className="flex gap-1.5">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                      <div className="w-2.5 h-2.5 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                      <div className="w-2.5 h-2.5 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                      <div className="w-2.5 h-2.5 bg-purple-500 rounded-full animate-bounce"></div>
                     </div>
+                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Calculando...</span>
                 </div>
             </div>
         )}
       </div>
 
       {/* Input Section */}
-      <div className="mt-6 relative">
+      <div className="mt-8 relative px-1">
         <input 
           type="text" 
           placeholder="Dúvida ou comando..."
-          className="w-full glass border-white/10 rounded-[1.5rem] py-5 pl-6 pr-16 text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50 transition-all font-medium"
+          className="w-full glass border-white/10 rounded-[2rem] py-6 pl-8 pr-20 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all font-bold placeholder:text-zinc-600"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
         />
         <button 
           onClick={() => handleSend()}
-          className="absolute right-2 top-2 w-12 h-12 btn-primary text-white rounded-[1.2rem] flex items-center justify-center shadow-lg shadow-purple-500/30 transition-all disabled:opacity-30"
+          className="absolute right-3 top-3 bottom-3 w-14 btn-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 transition-all disabled:opacity-30"
           disabled={!input.trim() || isLoading}
         >
-          <Send size={20} />
+          <Send size={22} />
         </button>
       </div>
 

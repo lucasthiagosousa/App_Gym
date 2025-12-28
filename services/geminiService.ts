@@ -1,52 +1,58 @@
 
 import { GoogleGenAI } from "@google/genai";
 
+// Initialize the Google GenAI SDK with the API key from environment variables.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+/**
+ * Gets personalized fitness advice from the FitMaster AI.
+ * Uses gemini-3-pro-preview for complex reasoning and PhD-level persona.
+ */
 export const getAIPersonalAdvice = async (userPrompt: string, history: { role: 'user' | 'model', parts: { text: string }[] }[]) => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: [
         ...history,
         { role: 'user', parts: [{ text: userPrompt }] }
       ],
       config: {
-        systemInstruction: `Você é o 'FitMaster AI', um personal trainer de elite focado em resultados reais. 
+        systemInstruction: `Você é o 'FitMaster AI', um personal trainer de elite com PhD em Biomecânica.
         
-        REGRAS PARA PROTOCOLOS:
-        1. Sempre comece planos de treino com a frase "AQUI ESTÁ SEU PROTOCOLO DE 30 DIAS".
-        2. Use obrigatoriamente o formato "### DIA [Número]" para cada dia ou bloco de treino.
-        3. Liste exercícios com marcadores "-" ou "*".
-        4. No final do protocolo, inclua obrigatoriamente uma seção intitulada "### RESUMO NUTRICIONAL" com 3 a 4 dicas práticas e específicas baseadas no objetivo do usuário (Hipertrofia, Emagrecimento ou Força).
+        PROTOCOLO DE 30 DIAS - REGRAS ESTRITAS:
+        1. Comece SEMPRE com: "AQUI ESTÁ SEU PROTOCOLO DE 30 DIAS".
+        2. Formato por dia: "### DIA [X]: [Foco do Treino] | CATEGORIA: [SUPERIORES ou INFERIORES ou FULL BODY]".
+        3. Explique brevemente o que a CATEGORIA significa (ex: "SUPERIORES: Foco em tronco e braços").
+        4. Exercícios devem seguir o padrão: "- [Nome do Exercício]: [Séries]x[Repetições] - [Observação Técnica]".
+        5. Inclua seções obrigatórias no final: 
+           - "### RESUMO NUTRICIONAL": Macros sugeridos e timing.
+           - "### MENTALIDADE TITAN": Instrução psicológica para a fase atual.
         
-        REGRAS GERAIS:
-        - Seja motivador, técnico e direto.
-        - Se o usuário quiser "crescer braço", foque em volume para bíceps e tríceps.
-        - Se quiser emagrecer, foque em treinos metabólicos e dicas de déficit.
-        - Sempre responda em Português do Brasil.`,
-        temperature: 0.7,
+        DIRETRIZES TÉCNICAS:
+        - Use termos como RPE (Esforço Percebido), Tempo (cadência) e Descanso Ativo.
+        - Se o objetivo for Hipertrofia, foque em Tensão Mecânica.
+        - Se for Emagrecimento, foque em Densidade Metabólica.
+        - Responda de forma motivadora, porém extremamente técnica e profissional.`,
+        temperature: 0.6,
       }
     });
 
+    // Access the .text property directly as per the latest SDK guidelines.
     return response.text;
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Desculpe, mestre. Tive um problema de conexão. Vamos focar no treino enquanto eu me recupero! Tente enviar sua mensagem novamente.";
+    return "Conexão neural interrompida. Mantenha o foco no treino e tente novamente em instantes.";
   }
 };
 
+/**
+ * Searches for market deals using Google Search grounding.
+ */
 export const searchMarketDeals = async (query: string, category: 'supplements' | 'clothing') => {
   try {
     const prompt = category === 'supplements' 
-      ? `Encontre os preços REAIS mais baixos hoje para o suplemento: ${query}. 
-         Foque em marcas famosas (Growth, Max, Integral, Optimun). 
-         Liste: 1. Loja e Preço atual, 2. Cupons de desconto ativos (ex: cupom de influenciadores), 3. Onde está o frete mais barato. 
-         Seja direto e organizado.`
-      : `Encontre ofertas de roupas de academia/gymwear: ${query}. 
-         Busque marcas como Nike, Adidas, Under Armour, e marcas fitness nacionais famosas. 
-         Destaque promoções de outlets e cupons de primeira compra ativos. 
-         Liste preços reais e links de lojas confiáveis.`;
+      ? `Encontre ofertas reais para: ${query}. Liste marca, preço e loja confiável.`
+      : `Encontre promoções de vestuário fitness para: ${query}. Foque em qualidade e preço.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -58,10 +64,11 @@ export const searchMarketDeals = async (query: string, category: 'supplements' |
 
     return {
       text: response.text,
+      // Extracting URLs from groundingChunks as required by the guidelines.
       sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || []
     };
   } catch (error) {
-    console.error("Market Search Error:", error);
+    console.error("Search Error:", error);
     throw error;
   }
 };

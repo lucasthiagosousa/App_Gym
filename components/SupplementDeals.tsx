@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { ShoppingCart, Tag, ExternalLink, Flame, Search, Loader2, Globe, ArrowRight, Sparkles, Shirt, ShoppingBag, Percent, Ticket } from 'lucide-react';
-import { SupplementDeal } from '../types';
+// Fixed: Removed non-existent import 'SupplementDeal' from '../types'
 import { searchMarketDeals } from '../services/geminiService';
 
 const QUICK_SEARCHES = {
